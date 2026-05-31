@@ -1,0 +1,16 @@
+# Copy this file to config.properties and fill in real values.
+# config.properties is git-ignored so credentials are not committed.
+
+baseUrl=https://bpalpjk.madanateknologi.web.id
+mapPath=/ipal/map
+
+# Admin credentials (email login)
+email=admin@gmail.com
+password=password
+
+# Browser settings
+browser=chrome
+headless=true
+
+# Explicit-wait timeout in seconds
+timeoutSeconds=20

@@ -36,3 +36,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Test config with credentials (keep .example committed) ###
+src/test/resources/config.properties
