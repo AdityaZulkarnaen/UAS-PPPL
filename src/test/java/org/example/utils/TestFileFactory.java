@@ -6,6 +6,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 /**
  * Generates test files on the fly so that BVA/EP boundary data (especially the
@@ -19,6 +20,10 @@ public final class TestFileFactory {
 
     /** ~50 MB threshold advertised by the upload modal. */
     private static final long MAX_BYTES = 50L * 1024 * 1024;
+
+    /** Smallest possible valid PNG (1x1 transparent pixel), base64-encoded. */
+    private static final String TINY_PNG_BASE64 =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
     private TestFileFactory() {
     }
@@ -35,6 +40,16 @@ public final class TestFileFactory {
         try {
             Path target = dir().resolve(fileName);
             Files.writeString(target, content, StandardCharsets.UTF_8);
+            return target.toAbsolutePath();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot write test file " + fileName, e);
+        }
+    }
+
+    private static Path writeBytes(String fileName, byte[] content) {
+        try {
+            Path target = dir().resolve(fileName);
+            Files.write(target, content);
             return target.toAbsolutePath();
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot write test file " + fileName, e);
@@ -122,6 +137,10 @@ public final class TestFileFactory {
                     write("network.png", "not really a png").toString();
             case "oversized_geojson" -> createOversizedFile().toString();
             case "none" -> "";
+            // --- manhole report photo cases ---
+            case "valid_photo_png" -> validPhotoPng().toString();
+            case "wrong_ext_photo_pdf" -> wrongExtensionPhoto().toString();
+            case "oversized_photo" -> createOversizedPhoto().toString();
             default -> throw new IllegalArgumentException("Unknown test file case: " + caseKey);
         };
     }
@@ -152,6 +171,60 @@ public final class TestFileFactory {
             return target.toAbsolutePath();
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot create oversized test file", e);
+        }
+    }
+
+    // ---- manhole report photo files --------------------------------------
+
+    /**
+     * A minimal but genuinely valid 1x1 PNG, accepted by the dropzone's
+     * accept="image/jpeg,image/jpg,image/png,image/webp" filter.
+     */
+    public static Path validPhotoPng() {
+        byte[] bytes = Base64.getDecoder().decode(TINY_PNG_BASE64);
+        return writeBytes("valid_photo.png", bytes);
+    }
+
+    /**
+     * Berkas dengan ISI yang genuinely bukan gambar (teks biasa), diberi nama
+     * berekstensi .pdf. Versi sebelumnya menulis byte PNG asli dengan nama
+     * .pdf — itu membuat hasil test tidak konsisten, karena beberapa validator
+     * server memeriksa tipe berkas berdasarkan ISI/MIME (bukan cuma ekstensi
+     * nama), sehingga byte PNG yang valid tetap lolos validasi meski namanya
+     * .pdf. Dengan isi yang benar-benar bukan gambar, validasi tipe berkas
+     * (berbasis ekstensi maupun berbasis konten) seharusnya benar-benar gagal.
+     */
+    public static Path wrongExtensionPhoto() {
+        byte[] bytes = "Ini bukan berkas gambar — hanya teks biasa untuk pengujian."
+                .getBytes(StandardCharsets.UTF_8);
+        return writeBytes("wrong_ext_photo.pdf", bytes);
+    }
+    /**
+     * Builds a {@literal >}10 MB .png by padding valid PNG bytes with trailing
+     * junk bytes (PNG decoders/validators typically only care about the header
+     * and chunk structure at the start, so this keeps the extension/MIME type
+     * intact while exceeding any reasonable size cap the dropzone enforces).
+     */
+    private static Path createOversizedPhoto() {
+        try {
+            Path target = dir().resolve("oversized_photo.png");
+            byte[] head = Base64.getDecoder().decode(TINY_PNG_BASE64);
+            long targetSize = 10L * 1024 * 1024 + (1024 * 1024); // >10MB
+            try (RandomAccessFile raf = new RandomAccessFile(target.toFile(), "rw")) {
+                raf.setLength(0);
+                raf.write(head);
+                byte[] chunk = new byte[1024 * 1024];
+                java.util.Arrays.fill(chunk, (byte) 0);
+                long written = head.length;
+                while (written < targetSize) {
+                    int len = (int) Math.min(chunk.length, targetSize - written);
+                    raf.write(chunk, 0, len);
+                    written += len;
+                }
+            }
+            return target.toAbsolutePath();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot create oversized photo test file", e);
         }
     }
 }

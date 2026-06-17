@@ -19,5 +19,10 @@ import static io.cucumber.junit.platform.engine.Constants.FILTER_TAGS_PROPERTY_N
                 + "json:target/cucumber-reports/cucumber.json")
 //@ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "@login")
 //@ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "@map")
+//@ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "@lapor_masalah")
+@ConfigurationParameter(
+        key = FILTER_TAGS_PROPERTY_NAME,
+        value = "@TC-M11"
+)
 public class RunCucumberTest {
 }
