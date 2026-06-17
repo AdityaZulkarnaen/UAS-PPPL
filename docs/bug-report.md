@@ -1,44 +1,67 @@
-# Bug Report — Fitur Upload Jaringan (GeoJSON)
+# Bug Reporting & Automate Generation of Report
 
-**Aplikasi:** BPAL PJK IPAL — `https://bpalpjk.madanateknologi.web.id/ipal/upload`
-**Environment:** Chrome (Selenium), OS Windows 11, build per tanggal pengujian.
+Bug reporting dipisah menjadi **3 suite fitur**. Tiap report dihasilkan
+**otomatis** dari hasil eksekusi Cucumber (`target/cucumber-reports/cucumber.json`)
+oleh skrip [`scripts/generate-bug-report.ps1`](../scripts/generate-bug-report.ps1).
 
----
+## Daftar Report per Suite
 
-## Template Bug Report
-Gunakan format berikut untuk setiap bug yang ditemukan:
+| # | Suite Fitur | Feature File | Report |
+|---|---|---|---|
+| 1 | **Upload Data** | `upload_jaringan.feature` | [bug-report-upload-data.md](bug-report-upload-data.md) |
+| 2 | **Login & Visualisasi Data Jaringan** | `login.feature` + `visitor-map.feature` | [bug-report-login-visualisasi.md](bug-report-login-visualisasi.md) |
+| 3 | **Kirim Aduan (Lapor Masalah Manhole)** | `lapor_masalah_manhole.feature` | [bug-report-kirim-aduan.md](bug-report-kirim-aduan.md) |
+
+> Suite **Manajemen Aduan** (`aduan_management.feature`) adalah suite terpisah
+> yang sudah memiliki laporannya sendiri, sehingga tidak diikutkan di sini.
+
+## Isi Tiap Report
+1. **Ringkasan Hasil Pengujian** — total test case, jumlah passed, failed, pass rate.
+2. **Daftar Hasil (Expected vs Actual)** — tabel tiap test case beserta hasil
+   yang diharapkan vs hasil aktual dan status PASS/FAIL.
+3. **Daftar Bug Ditemukan** — hanya skenario gagal, memakai template bug report
+   (Bug ID, Severity, Priority, Komponen, Langkah Reproduksi, Hasil Diharapkan,
+   Hasil Aktual, Detail Error, Status).
+
+## Cara Generate (Automate Generation of Report)
+
+```powershell
+# 1. (sekali) salin konfigurasi
+copy src\test\resources\config.properties.example src\test\resources\config.properties
+
+# 2. Jalankan test suite -> menghasilkan target/cucumber-reports/cucumber.json
+mvn clean verify
+
+# 3. Generate ke-3 report bug otomatis dari hasil run
+powershell -ExecutionPolicy Bypass -File scripts\generate-bug-report.ps1
+```
+
+Suite mana yang dijalankan ditentukan oleh filter tag di
+[`RunCucumberTest.java`](../src/test/java/org/example/runners/RunCucumberTest.java):
+
+| Suite | Tag filter |
+|---|---|
+| Upload Data | `@upload` |
+| Login & Visualisasi | `@login or @map` |
+| Kirim Aduan | `@lapor_masalah` |
+| Ketiganya sekaligus | `@upload or @login or @map or @lapor_masalah` |
+
+> Generator hanya menimpa report untuk suite yang **ada** di `cucumber.json` pada
+> run terkini. Suite yang tidak dijalankan akan **dilewati** (report lamanya
+> dipertahankan), sehingga suite bisa dijalankan satu per satu tanpa menghapus
+> report suite lain.
+
+## Template Bug Report (acuan)
 
 | Field | Isi |
 |---|---|
-| **Bug ID** | BUG-XX |
-| **Judul** | Ringkas dan deskriptif |
+| **Bug ID** | BUG-`<PREFIX>`-XX |
+| **Judul** | Ringkas dan deskriptif (nama skenario) |
 | **Severity** | Critical / Major / Minor / Trivial |
 | **Priority** | High / Medium / Low |
-| **Komponen** | Upload Jaringan (GeoJSON) |
+| **Komponen** | Suite/halaman terkait |
 | **Environment** | Browser, OS, URL |
-| **Prasyarat** | Kondisi awal (mis. login admin, di halaman upload) |
-| **Langkah Reproduksi** | 1. ... 2. ... 3. ... |
+| **Langkah Reproduksi** | Langkah Gherkin Given/When/Then |
 | **Hasil Diharapkan** | Apa yang seharusnya terjadi |
-| **Hasil Aktual** | Apa yang benar-benar terjadi |
-| **Bukti** | Tangkapan layar (lampiran di laporan Cucumber) / test case terkait |
+| **Hasil Aktual** | Apa yang benar-benar terjadi + pesan error |
 | **Status** | Open / In Progress / Closed |
-
----
-
-## Daftar Bug yang Ditemukan
-
-<!-- Diisi manual berdasarkan analisis hasil pengujian. Contoh kerangka di bawah. -->
-
-> _Belum ada entri manual. Jalankan test, lalu analisis skenario yang gagal pada
-> bagian "Auto-Generated Summary" dan dokumentasikan tiap bug nyata di sini
-> menggunakan template di atas._
-
----
-
-## Auto-Generated Summary (Skenario Gagal)
-Bagian di bawah dibuat otomatis oleh `scripts/generate-bug-summary.ps1` dari
-`target/cucumber-reports/cucumber.json`. Jangan diedit manual.
-
-<!-- AUTO-SUMMARY:START -->
-_Belum ada data. Jalankan `mvn clean verify` lalu `scripts/generate-bug-summary.ps1`._
-<!-- AUTO-SUMMARY:END -->
