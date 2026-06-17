@@ -79,7 +79,7 @@ public class LaporMasalahManholeSteps {
 
     @And("Visitor mengklik tombol Lapor Masalah pada popup")
     public void visitorMengklikTombolLaporMasalahPadaPopup() {
-        laporPage = mapPage.clickLaporMasalahOnPopup();
+        laporPage = mapPage.clickLaporMasalahOnPopup    ();
         laporPage.waitLoaded();
     }
 

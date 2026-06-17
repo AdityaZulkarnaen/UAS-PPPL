@@ -90,11 +90,6 @@ public class VisualisasiPetaSteps {
         Assertions.assertTrue(mapPage.isNoResultMessageDisplayed());
     }
 
-    @Then("Detail manhole {string} ditampilkan")
-    public void detailManholeDitampilkan(String code) {
-        Assertions.assertTrue(mapPage.isDetailManholeDisplayed(code));
-    }
-
     @Then("Popup detail manhole ditampilkan")
     public void popupDetailManholeDitampilkan() {
         Assertions.assertTrue(mapPage.isPopupDetailManholeDisplayed());

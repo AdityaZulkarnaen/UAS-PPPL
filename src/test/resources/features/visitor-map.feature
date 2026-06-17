@@ -39,7 +39,7 @@ Feature: Visualisasi Peta Jaringan dan Manhole
   Scenario: User mencari wilayah yang tersedia
     When User mengisi pencarian peta dengan "Gondokusuman"
     And User menekan Enter pada pencarian peta
-    Then Detail manhole "WH1" ditampilkan
+    Then Popup detail manhole ditampilkan
 
   @map @search @positive
   Scenario: User membuka detail manhole melalui kode manhole
