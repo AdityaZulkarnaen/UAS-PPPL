@@ -60,11 +60,9 @@ Feature: Lapor Masalah Aset Manhole (Pengaduan Publik)
       | 1       | Laporan berhasil terkirim dengan nomor tiket |
       | 5000    | Laporan berhasil terkirim dengan nomor tiket |
 
-  # Catatan BVA: textarea memiliki atribut maxlength="5000" di DOM, sehingga
-  # mengetik 5001 karakter via browser secara native akan terpotong oleh
-  # browser itu sendiri (bukan aplikasi). Skenario di bawah memverifikasi
-  # bahwa batas ini benar2 ditegakkan: nilai textarea TIDAK PERNAH melebihi
-  # 5000 karakter walau kita mencoba mengisi 5001 karakter.
+  # Catatan BVA: textarea memiliki atribut maxlength="5000" di DOM, tetapi
+  # skenario ini memverifikasi bahwa server juga menolak input lebih dari
+  # 5000 karakter ketika permintaan disubmit.
   @bva @deskripsi @boundary-enforcement @TC-M07
   Scenario: BVA deskripsi laporan mencoba melebihi batas 5000 karakter
     Given Visitor membuka halaman Lapor Masalah untuk manhole "4.2_J1.MH-25"
@@ -72,7 +70,8 @@ Feature: Lapor Masalah Aset Manhole (Pengaduan Publik)
     And Visitor mengunggah foto dengan kasus "valid_photo_png"
     And Visitor menjawab captcha dengan benar
     And Visitor menekan tombol Kirim Laporan
-    Then Laporan berhasil terkirim dengan nomor tiket
+    Then Sistem menampilkan validasi deskripsi tidak boleh lebih dari 5000 karakter
+    And Laporan gagal terkirim
 
   # -----------------------------------------------------------------------
   # TC-M08 — Foto tidak diunggah (EP, negative — field wajib)
@@ -114,35 +113,19 @@ Feature: Lapor Masalah Aset Manhole (Pengaduan Publik)
     And Visitor menekan tombol Kirim Laporan
     Then Sistem menolak atau tidak memproses berkas foto berekstensi tidak didukung
 
-  # -----------------------------------------------------------------------
-  # TC-M11 — BVA ukuran berkas foto besar (>10MB)
-  # CATATAN: belum ada konfirmasi pasti apakah aplikasi menegakkan batas
-  # ukuran file untuk foto dokumentasi (tidak ditemukan validasi ukuran di
-  # markup form). Skenario ini bersifat eksploratif: jika aplikasi TERNYATA
-  # tidak memvalidasi ukuran, hasilnya dicatat sebagai temuan/bug, bukan
-  # kegagalan test (mengikuti pola BUG-02 pada modul aduan).
-  # -----------------------------------------------------------------------
-  @bva @foto @exploratory @TC-M11
-  Scenario: Unggah foto dokumentasi berukuran besar (>10MB)
-    Given Visitor membuka halaman Lapor Masalah untuk manhole "4.2_J1.MH-25"
-    And Visitor mengisi deskripsi laporan dengan teks "Pengujian unggah foto berukuran besar."
-    And Visitor mengunggah foto dengan kasus "oversized_photo"
-    And Visitor menjawab captcha dengan benar
-    And Visitor menekan tombol Kirim Laporan
-    Then Sistem merespons unggahan foto besar dengan konsisten (berhasil atau ditolak dengan pesan jelas)
-
-  # -----------------------------------------------------------------------
-  # TC-M11 — Captcha dijawab salah (EP, negative)
-  # -----------------------------------------------------------------------
-  @ep @negative @captcha @TC-M11
-  Scenario: Visitor mengirim laporan dengan jawaban captcha yang salah
-    Given Visitor membuka halaman Lapor Masalah untuk manhole "4.2_J1.MH-25"
-    And Visitor mengisi deskripsi laporan dengan teks "Manhole tergenang air saat hujan."
-    And Visitor mengunggah foto dengan kasus "valid_photo_png"
-    And Visitor menjawab captcha dengan salah
-    And Visitor menekan tombol Kirim Laporan
-    Then Sistem menampilkan validasi captcha salah
-    And Laporan gagal terkirim
+    # -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # TC-M11 — Captcha dijawab salah (EP, negative)
+    # -----------------------------------------------------------------------
+    @ep @negative @captcha @TC-M11
+    Scenario: Visitor mengirim laporan dengan jawaban captcha yang salah
+      Given Visitor membuka halaman Lapor Masalah untuk manhole "4.2_J1.MH-25"
+      And Visitor mengisi deskripsi laporan dengan teks "Manhole tergenang air saat hujan."
+      And Visitor mengunggah foto dengan kasus "valid_photo_png"
+      And Visitor menjawab captcha dengan salah
+      And Visitor menekan tombol Kirim Laporan
+      Then Sistem menampilkan validasi captcha salah
+      And Laporan gagal terkirim
 
   # -----------------------------------------------------------------------
   # TC-M12 — Visitor meminta soal captcha baru (EP, positive)

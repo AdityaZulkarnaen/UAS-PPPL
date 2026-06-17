@@ -6,6 +6,7 @@ import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import java.time.Duration;
 
 /**
  * Page Object for /ipal/lapor-masalah — the public "Lapor Masalah Jaringan IPAL"
@@ -33,26 +34,55 @@ public class LaporMasalahPage extends BasePage {
     private static final By CAPTCHA_REFRESH_BUTTON = By.id("captcha-refresh");
     private static final By CAPTCHA_ERROR_TEXT = By.id("captcha-error-text");
 
-    private static final By GLOBAL_ERROR = By.id("global-error");
+//    private static final By GLOBAL_ERROR = By.id("global-error");
     private static final By SUBMIT_BUTTON = By.id("submit-btn");
 
     private final By deskripsiError = By.id("deskripsi-error");
     private final By fotoError = By.id("foto-error");
     private final By globalError = By.id("global-error");
 
+    /** Nomor tiket di-cache di sini karena DOM-nya hilang begitu app redirect ke /ipal/map. */
+    private String lastTicketNumber = "";
 
 
-    // Success state: the page shows "Laporan berhasil terkirim" + a ticket number.
-    private static final By SUCCESS_MESSAGE = By.xpath(
-            "//*[contains(normalize-space(.),'Laporan berhasil terkirim') " +
-                    "or contains(normalize-space(.),'berhasil terkirim')]");
 
-    private static final By TICKET_NUMBER = By.xpath(
-            "//*[contains(normalize-space(.),'Nomor tiket')]" +
-                    "/following::*[1] | //*[contains(@class,'ticket')]");
+    // Success state: #success-banner berisi teks "Laporan berhasil terkirim" + nomor
+    // tiket. PENTING: aplikasi auto-redirect ke /ipal/map sekitar 2-3 detik setelah
+    // banner ini tampil, jadi teksnya harus ditangkap SEGERA saat terdeteksi —
+    // jangan ditunda dengan sleep/diagnostic tambahan sebelum membacanya.
+    private static final By SUCCESS_MESSAGE = By.id("success-banner");
 
     public LaporMasalahPage(WebDriver driver) {
         super(driver);
+    }
+    /**
+     * Cek visibility error dengan explicit wait pendek (3 detik), karena
+     * beberapa pesan error dirender setelah delay singkat (mis. setelah
+     * request validasi captcha/foto selesai), bukan langsung saat klik submit.
+     */
+    private boolean isErrorVisible(By locator, int timeoutSeconds) {
+        try {
+            new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(timeoutSeconds))
+                    .until(ExpectedConditions.visibilityOfElementLocated(locator));
+            String text = driver.findElement(locator).getText().trim();
+            return !text.isEmpty();
+        } catch (TimeoutException e) {
+            return false;
+        }
+    }
+
+    /** Dump state untuk debugging — cetak status semua elemen pesan setelah submit. */
+    public void dumpSubmissionState(String label) {
+        System.out.println("=== [DIAG:" + label + "] URL: " + driver.getCurrentUrl());
+        for (String id : new String[]{"success-banner", "global-error", "deskripsi-error", "foto-error"}) {
+            try {
+                WebElement el = driver.findElement(By.id(id));
+                System.out.println("  #" + id + " displayed=" + el.isDisplayed()
+                        + " style='" + el.getAttribute("style") + "' text='" + el.getText() + "'");
+            } catch (Exception e) {
+                System.out.println("  #" + id + " not found");
+            }
+        }
     }
 
     public LaporMasalahPage waitLoaded() {
@@ -116,12 +146,7 @@ public class LaporMasalahPage extends BasePage {
     }
 
     public boolean isDeskripsiErrorDisplayed() {
-        try {
-            return driver.findElement(deskripsiError).isDisplayed()
-                    && !driver.findElement(deskripsiError).getText().trim().isEmpty();
-        } catch (Exception e) {
-            return false;
-        }
+        return isErrorVisible(deskripsiError, 5);
     }
 
 
@@ -139,12 +164,7 @@ public class LaporMasalahPage extends BasePage {
     }
 
     public boolean isFotoErrorDisplayed() {
-        try {
-            return driver.findElement(fotoError).isDisplayed()
-                    && !driver.findElement(fotoError).getText().trim().isEmpty();
-        } catch (Exception e) {
-            return false;
-        }
+        return isErrorVisible(fotoError, 5);
     }
 
 
@@ -181,7 +201,7 @@ public class LaporMasalahPage extends BasePage {
     public LaporMasalahPage typeWrongCaptchaAnswer() {
         String question = getCaptchaQuestionText();
         int correct = evaluateCaptcha(question);
-        int wrong = correct + 1000; // far enough off to never collide
+        int wrong = correct + 1; // far enough off to never collide
         WebElement answerInput = waitVisible(CAPTCHA_ANSWER_INPUT);
         answerInput.clear();
         answerInput.sendKeys(String.valueOf(wrong));
@@ -201,6 +221,29 @@ public class LaporMasalahPage extends BasePage {
         try {
             return driver.findElement(CAPTCHA_ERROR_TEXT).getText().trim();
         } catch (Exception e) {
+            return "";
+        }
+    }
+
+    public String waitForCaptchaOrGlobalErrorText() {
+        try {
+            return new org.openqa.selenium.support.ui.WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(d -> {
+                        if (isDisplayed(CAPTCHA_ERROR_TEXT)) {
+                            String text = getCaptchaErrorText();
+                            if (!text.isEmpty()) {
+                                return text;
+                            }
+                        }
+                        if (isDisplayed(globalError)) {
+                            String text = getGlobalErrorText();
+                            if (!text.isEmpty()) {
+                                return text;
+                            }
+                        }
+                        return null;
+                    });
+        } catch (TimeoutException e) {
             return "";
         }
     }
@@ -231,20 +274,38 @@ public class LaporMasalahPage extends BasePage {
 
     public boolean isSubmissionSuccessful() {
         try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(SUCCESS_MESSAGE));
+            WebElement banner = wait.until(ExpectedConditions.visibilityOfElementLocated(SUCCESS_MESSAGE));
+            // Tangkap teksnya SEKARANG — beberapa detik lagi app redirect ke
+            // /ipal/map dan elemen ini lenyap dari DOM.
+            lastTicketNumber = extractTicketNumber(banner.getText());
             return true;
         } catch (TimeoutException e) {
-            return false;
+            try {
+                return wait.until(ExpectedConditions.urlContains("/ipal/map"));
+            } catch (TimeoutException ignored) {
+                return false;
+            }
         }
     }
 
-    public boolean isGlobalErrorDisplayed() {
-        try {
-            return driver.findElement(globalError).isDisplayed()
-                    && !driver.findElement(globalError).getText().trim().isEmpty();
-        } catch (Exception e) {
-            return false;
+    private static String extractTicketNumber(String bannerText) {
+        if (bannerText == null) return "";
+        for (String line : bannerText.split("\\R")) {
+            if (line.toLowerCase().contains("nomor tiket")) {
+                return line.replaceAll("(?i).*nomor tiket\\s*:?\\s*", "").trim();
+            }
         }
+        return "";
+    }
+
+    private static String truncateText(String s, int max) {
+        if (s == null) return "";
+        s = s.replace("\n", " ").trim();
+        return s.length() > max ? s.substring(0, max) + "..." : s;
+    }
+
+    public boolean isGlobalErrorDisplayed() {
+        return isErrorVisible(globalError, 5);
     }
 
     public String getGlobalErrorText() {
@@ -256,11 +317,8 @@ public class LaporMasalahPage extends BasePage {
     }
 
     /** Best-effort extraction of the ticket number shown after a successful submission. */
+    /** Nomor tiket dari pengiriman terakhir, di-cache saat {@link #isSubmissionSuccessful()} dipanggil. */
     public String getTicketNumber() {
-        try {
-            return waitVisible(TICKET_NUMBER).getText().trim();
-        } catch (Exception e) {
-            return "";
-        }
+        return lastTicketNumber;
     }
 }

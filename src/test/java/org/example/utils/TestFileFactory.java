@@ -186,14 +186,19 @@ public final class TestFileFactory {
     }
 
     /**
-     * Same PNG bytes, but with a .pdf extension — used to verify the dropzone
-     * rejects file types outside the accepted image list.
+     * Berkas dengan ISI yang genuinely bukan gambar (teks biasa), diberi nama
+     * berekstensi .pdf. Versi sebelumnya menulis byte PNG asli dengan nama
+     * .pdf — itu membuat hasil test tidak konsisten, karena beberapa validator
+     * server memeriksa tipe berkas berdasarkan ISI/MIME (bukan cuma ekstensi
+     * nama), sehingga byte PNG yang valid tetap lolos validasi meski namanya
+     * .pdf. Dengan isi yang benar-benar bukan gambar, validasi tipe berkas
+     * (berbasis ekstensi maupun berbasis konten) seharusnya benar-benar gagal.
      */
     public static Path wrongExtensionPhoto() {
-        byte[] bytes = Base64.getDecoder().decode(TINY_PNG_BASE64);
+        byte[] bytes = "Ini bukan berkas gambar — hanya teks biasa untuk pengujian."
+                .getBytes(StandardCharsets.UTF_8);
         return writeBytes("wrong_ext_photo.pdf", bytes);
     }
-
     /**
      * Builds a {@literal >}10 MB .png by padding valid PNG bytes with trailing
      * junk bytes (PNG decoders/validators typically only care about the header
