@@ -9,7 +9,7 @@ oleh skrip [`scripts/generate-bug-report.ps1`](../scripts/generate-bug-report.ps
 | # | Suite Fitur | Feature File | Report |
 |---|---|---|---|
 | 1 | **Upload Data** | `upload_jaringan.feature` | [bug-report-upload-data.md](bug-report-upload-data.md) |
-| 2 | **Login & Visualisasi Data Jaringan** | `login.feature` + `visitor-map.feature` | [bug-report-login-visualisasi.md](bug-report-login-visualisasi.md) |
+| 2 | **Login & Visualisasi Data Jaringan** | `login.feature` + `visitor-map.feature` | [bug-report-login-visualisasi.md](bug-report-login-visualisasi) |
 | 3 | **Kirim Aduan (Lapor Masalah Manhole)** | `lapor_masalah_manhole.feature` | [bug-report-kirim-aduan.md](bug-report-kirim-aduan.md) |
 
 > Suite **Manajemen Aduan** (`aduan_management.feature`) adalah suite terpisah

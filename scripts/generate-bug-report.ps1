@@ -152,6 +152,22 @@ foreach ($suite in $suites) {
         $match
     }
 
+    # Deteksi suite multi-feature yang datanya PARSIAL: bila sebagian feature file
+    # milik suite ini tidak ada di run terkini, jangan timpa report (agar tidak
+    # kehilangan data feature lain). Mis. suite Login & Visualisasi butuh
+    # login.feature DAN visitor-map.feature; run hanya @map akan parsial.
+    $patternsPresent = 0
+    foreach ($pat in $suite.FilePatterns) {
+        $hit = $features | Where-Object { (Get-FeatureFileName $_.uri) -like "*$pat*" }
+        if ($hit) { $patternsPresent++ }
+    }
+    if ($patternsPresent -gt 0 -and $patternsPresent -lt $suite.FilePatterns.Count) {
+        $tags = ($suite.FilePatterns -join " + ")
+        Write-Host "Dilewati: suite '$($suite.Title)' datanya PARSIAL ($patternsPresent/$($suite.FilePatterns.Count) feature). Jalankan semua feature suite ini ($tags) agar report lengkap. Report lama dipertahankan."
+        $summaryLines.Add("  - [$($suite.Title)] DILEWATI - data parsial, jalankan semua feature suite ini")
+        continue
+    }
+
     $total  = 0
     $passed = 0
     $failed = 0
