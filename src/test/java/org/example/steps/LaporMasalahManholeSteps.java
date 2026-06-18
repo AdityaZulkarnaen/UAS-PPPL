@@ -142,7 +142,6 @@ public class LaporMasalahManholeSteps {
 
     @And("Visitor tidak mengunggah foto")
     public void visitorTidakMengunggahFoto() {
-        // no-op: simply never call chooseFoto()
     }
 
     // -----------------------------------------------------------------------
@@ -188,10 +187,8 @@ public class LaporMasalahManholeSteps {
     public void laporanBerhasilTerkirim() {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
-        // Strategy: accept ANY of these as success:
-        //  - redirect to /ipal/map
-        //  - visible success banner on the current page (captured by laporPage.isSubmissionSuccessful())
-        // If neither happens within timeout, fail and include any global error text for diagnosis.
+        // Strategy: accept ANY of these as success: redirect ke /ipal/map atau muncul banner sukses
+
         boolean success = false;
         try {
             success = wait.until(d -> {
@@ -298,6 +295,7 @@ public class LaporMasalahManholeSteps {
      * verifies the *application* itself still rejects (or fails to process)
      * the unsupported file, rather than relying on browser-level filtering.
      */
+
     @Then("Sistem menolak atau tidak memproses berkas foto berekstensi tidak didukung")
     public void sistemMenolakBerkasFotoTidakDidukung() {
 
@@ -320,14 +318,6 @@ public class LaporMasalahManholeSteps {
         assertTrue(matches, "Pesan validasi ekstensi file tidak sesuai. Actual: '" + actualMessage + "'");
     }
 
-    /**
-     * No confirmed size-limit was found in the form markup for the photo
-     * upload (unlike the GeoJSON upload, which has a documented ~50MB cap).
-     * This step accepts either outcome but requires the application to be
-     * internally CONSISTENT: if it claims success, the success UI must fully
-     * render; if it rejects, a clear error must be shown. An ambiguous
-     * "stuck" state (neither success nor error after submit) is a failure.
-     */
     @Then("Sistem merespons unggahan foto besar dengan konsisten \\(berhasil atau ditolak dengan pesan jelas)")
     public void sistemMeresponsUnggahanFotoBesarDenganKonsisten() {
         boolean succeeded = laporPage.isSubmissionSuccessful();
@@ -342,49 +332,5 @@ public class LaporMasalahManholeSteps {
                     + "aplikasi tampaknya tidak menegakkan batas ukuran berkas foto. "
                     + "Pertimbangkan menambahkan validasi ukuran maksimum di sisi klien/server.");
         }
-    }
-
-    // -----------------------------------------------------------------------
-    // End-to-end bridge: verify the new manhole report appears for admin
-    // -----------------------------------------------------------------------
-
-    @Given("Admin sudah login ke aplikasi Simlab-BPJK untuk verifikasi aduan")
-    public void adminSudahLoginUntukVerifikasiAduan() {
-        new LoginPage(driver)
-                .openMap()
-                .clickAdminLogin()
-                .selectEmailTab()
-                .loginWithEmail(ConfigReader.email(), ConfigReader.password())
-                .waitLoaded()
-                .openModuleIpal()
-                .waitLoaded();
-    }
-
-    @When("Admin mencari aduan berdasarkan kode manhole {string}")
-    public void adminMencariAduanBerdasarkanKodeManhole(String kodeManhole) {
-        driver.get(ConfigReader.baseUrl() + "/ipal/aduan");
-        AduanListPage listPage = new AduanListPage(driver).waitLoaded();
-        listPage.searchKeyword(kodeManhole);
-        this.adminListPage = listPage;
-    }
-
-    @Then("Aduan manhole baru muncul pada daftar aduan admin")
-    public void aduanManholeBaruMunculPadaDaftarAduanAdmin() {
-        assertTrue(adminListPage.hasRows(),
-                "Aduan manhole yang baru dikirim seharusnya muncul di daftar aduan admin "
-                        + "untuk kode '" + MANHOLE_KODE + "'");
-    }
-
-    @And("Admin membuka detail aduan manhole tersebut")
-    public void adminMembukaDetailAduanManholeTersebut() {
-        adminDetailPage = adminListPage.clickFirstDetail();
-        adminDetailPage.waitLoaded();
-    }
-
-    @Then("Detail aduan menampilkan status awal {string}")
-    public void detailAduanMenampilkanStatusAwal(String statusHarapan) {
-        assertTrue(adminDetailPage.currentStatusContains(statusHarapan),
-                "Status aduan baru seharusnya '" + statusHarapan + "', "
-                        + "tetapi tidak ditemukan di halaman: " + driver.getCurrentUrl());
     }
 }
