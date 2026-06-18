@@ -26,7 +26,7 @@ $ErrorActionPreference = "Stop"
 
 $root       = Split-Path -Parent $PSScriptRoot
 $jsonPath   = Join-Path $root "target\cucumber-reports\cucumber.json"
-$docsDir    = Join-Path $root "docs"
+$docsDir    = Join-Path $root "docs\Bug Report"
 $baseUrl    = "https://bpalpjk.madanateknologi.web.id"
 $timestamp  = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
@@ -71,6 +71,14 @@ $suites = @(
         FilePatterns = @("lapor_masalah_manhole")
         OutputFile   = "bug-report-kirim-aduan.md"
         BugPrefix    = "ADU"
+    },
+    [pscustomobject]@{
+        Key          = "manajemen-aduan"
+        Title        = "Manajemen Aduan IPAL"
+        Komponen     = "Manajemen Aduan IPAL (/ipal/aduan dan /ipal/aduan/{id})"
+        FilePatterns = @("aduan_management")
+        OutputFile   = "bug-report-manajemen-aduan.md"
+        BugPrefix    = "MGR"
     }
 )
 
