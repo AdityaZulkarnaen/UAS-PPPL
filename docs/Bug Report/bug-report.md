@@ -2,7 +2,7 @@
 
 Bug reporting dipisah menjadi **3 suite fitur**. Tiap report dihasilkan
 **otomatis** dari hasil eksekusi Cucumber (`target/cucumber-reports/cucumber.json`)
-oleh skrip [`scripts/generate-bug-report.ps1`](../scripts/generate-bug-report.ps1).
+oleh skrip [`scripts/generate-bug-report.ps1`](../../scripts/generate-bug-report.ps1).
 
 ## Daftar Report per Suite
 
@@ -37,7 +37,7 @@ powershell -ExecutionPolicy Bypass -File scripts\generate-bug-report.ps1
 ```
 
 Suite mana yang dijalankan ditentukan oleh filter tag di
-[`RunCucumberTest.java`](../src/test/java/org/example/runners/RunCucumberTest.java):
+[`RunCucumberTest.java`](../../src/test/java/org/example/runners/RunCucumberTest.java):
 
 | Suite | Tag filter |
 |---|---|

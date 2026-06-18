@@ -15,7 +15,7 @@ BPAL PJK IPAL melalui pengujian fungsional otomatis berbasis BDD.
 - **Boundary Value Analysis (BVA):** menguji nilai batas ukuran berkas (0 byte,
   >50 MB) di sekitar batas yang ditentukan sistem.
 
-Detail lengkap test case ada di [test-cases.md](test-cases.md).
+Detail lengkap test case ada di [test-cases.md](Test Cases/test-cases.md).
 
 ## 4. Arsitektur Otomasi
 - **Bahasa/Build:** Java 23 + Maven.
@@ -59,7 +59,7 @@ powershell -ExecutionPolicy Bypass -File scripts\generate-bug-summary.ps1
 ```
 - Laporan HTML: `target/cucumber-html-reports/overview-features.html`
 - Laporan Cucumber: `target/cucumber-reports/cucumber.html`
-- Ringkasan bug otomatis: bagian "Auto-Generated Summary" di [bug-report.md](bug-report.md)
+- Ringkasan bug otomatis: bagian "Auto-Generated Summary" di [bug-report.md](Bug Report/bug-report.md)
 
 > Set `-Dheadless=false` untuk melihat browser berjalan:
 > `mvn clean verify -Dheadless=false`
