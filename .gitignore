@@ -39,3 +39,4 @@ build/
 
 ### Test config with credentials (keep .example committed) ###
 src/test/resources/config.properties
+CLAUDE.md
