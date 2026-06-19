@@ -28,8 +28,8 @@ Proyek pengujian otomatis berbasis BDD untuk aplikasi **BPAL PJK IPAL**, sistem 
 |---|---|---|---|
 | Lilis | Login BPALPJK | `login.feature` | 9 |
 | Lilis | Visualisasi Peta | `visitor-map.feature` | 8 |
-| Taqi | Upload Dataset Jaringan | `upload_jaringan.feature` | 17 |
-| Adit | Kirim Aduan (Lapor Masalah Manhole) | `lapor_masalah_manhole.feature` | 12 |
+| Adit | Upload Dataset Jaringan | `upload_jaringan.feature` | 17 |
+| Taqi | Kirim Aduan (Lapor Masalah Manhole) | `lapor_masalah_manhole.feature` | 12 |
 | Azril | Manajemen Aduan IPAL | `aduan_management.feature` | 15 |
 
 ---
